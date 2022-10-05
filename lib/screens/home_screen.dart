@@ -1,19 +1,25 @@
+import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:news_app_flutter_course/consts/vars.dart';
+import 'package:news_app_flutter_course/screens/Inner_Screen/Search_screen.dart';
 import 'package:news_app_flutter_course/services/utils.dart';
 import 'package:news_app_flutter_course/widgets/article_widget.dart';
 import 'package:news_app_flutter_course/widgets/drawer_widget.dart';
+import 'package:news_app_flutter_course/widgets/top_trending.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/theme_provider.dart';
+import '../widgets/loading_widget.dart';
 import '../widgets/tabs.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+  
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -26,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Size size = Utils(context).getScreenSize;
+
     final Color color = Utils(context).getColor;
 
     return SafeArea(
@@ -36,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           centerTitle: true,
           title: Text(
-            'News App',
+            "News App",
             style: GoogleFonts.montserrat(
                 textStyle: TextStyle(
                     color: color,
@@ -45,7 +53,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.bold)),
           ),
           actions: [
-            IconButton(onPressed: () {}, icon: const Icon(IconlyLight.search))
+            IconButton(onPressed: () {Navigator.push(
+      context,
+      PageTransition(
+        type: PageTransitionType.bottomToTop,
+        child: SearchScreen(),
+        inheritTheme: true,
+        ctx: context),
+);}, 
+
+icon: const Icon(IconlyLight.search))
           ],
         ),
         drawer: const DrawerWidget(),
@@ -165,24 +182,45 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(
             height: 5,
           ),
-           newsType == NewsType.topTrending ? Container(): Align(
-              alignment: Alignment.topRight,
-              child: Material(
-                borderRadius: BorderRadius.circular(15),
-                color: Color(0xff3D8361).withOpacity(0.2),
-                child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: DropdownButton(
-
-                      elevation: 2,
-                       borderRadius: BorderRadius.circular(25),
-                        value: Sortby,
-                        items: dropDownItems,
-                        onChanged: (String? value) {})),
-              )),
-          Expanded(child: ListView.builder(itemCount:  20 ,itemBuilder: (ctx , index){
-            return ArticleWidget();
-          }))
+          newsType == NewsType.topTrending
+              ? Container()
+              : Align(
+                  alignment: Alignment.topRight,
+                  child: Material(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Color(0xff3D8361).withOpacity(0.2),
+                    child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: DropdownButton(
+                            elevation: 2,
+                            borderRadius: BorderRadius.circular(25),
+                            value: Sortby,
+                            items: dropDownItems,
+                            onChanged: (String? value) {})),
+                  )),
+          //const LoadingWidget()
+          if (newsType == NewsType.allNews)
+            Expanded(
+              child: ListView.builder(itemBuilder: ((context, index) {
+                return const ArticleWidget();
+              })),
+            ),
+          if (newsType == NewsType.topTrending)
+            SizedBox(
+              height: size.height*0.6,
+             // child: LoadingWidget(newsType: newsType,),
+              child: Swiper(
+                itemWidth: size.width*0.9,
+                layout: SwiperLayout.STACK,
+                viewportFraction: 0.9,
+                autoplay: true,
+                autoplayDelay: 2000,
+                itemCount: 5,
+                itemBuilder: (context, index) {
+                  return const TopTrendingWidget();
+                },
+              ),
+            )
         ]),
       ),
     );
